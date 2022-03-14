@@ -1,10 +1,15 @@
 package com.pasukanlangit.id.media
 
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.app.PendingIntent
 import android.app.Service
+import android.content.Context
 import android.content.Intent
 import android.media.AudioAttributes
 import android.media.MediaPlayer
 import android.os.*
+import androidx.core.app.NotificationCompat
 import java.io.IOException
 import java.lang.ref.WeakReference
 
@@ -42,6 +47,7 @@ class MediaService : Service(), MediaPlayerCallback {
                 mMediaPlayer?.pause()
             }else{
                 mMediaPlayer?.start()
+                showNotif()
             }
         }
     }
@@ -50,6 +56,7 @@ class MediaService : Service(), MediaPlayerCallback {
         if(mMediaPlayer?.isPlaying == true || isReady){
             mMediaPlayer?.stop()
             isReady = false
+            stopNotif()
         }
     }
 
@@ -71,11 +78,44 @@ class MediaService : Service(), MediaPlayerCallback {
         mMediaPlayer?.setOnPreparedListener {
             isReady = true
             mMediaPlayer?.start()
+            showNotif()
         }
 
         mMediaPlayer?.setOnErrorListener { _, _, _ -> false }
 
     }
+
+    private fun showNotif(){
+        val notificationIntent = Intent(this, MainActivity::class.java)
+        notificationIntent.flags = Intent.FLAG_ACTIVITY_BROUGHT_TO_FRONT
+
+        val pendingIntent = PendingIntent.getActivity(this, 0, notificationIntent, PendingIntent.FLAG_IMMUTABLE)
+        val notification = NotificationCompat.Builder(this, CHANNEL_DEFAULT_IMPORTANCE)
+            .setContentTitle("Now Playing...")
+            .setContentText("Suara Pedang Pusaka-The beattle")
+            .setSmallIcon(R.drawable.ic_launcher_background)
+            .setContentIntent(pendingIntent)
+            .setTicker("TES3")
+            .build()
+        
+        createChannel()
+        
+        startForeground(ONGOING_NOTIFICATION_ID, notification)
+    }
+
+    private fun createChannel() {
+        val mNotificationManager = applicationContext.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+
+        val channel = NotificationChannel(CHANNEL_DEFAULT_IMPORTANCE, "Battery", NotificationManager.IMPORTANCE_DEFAULT)
+        channel.setShowBadge(false)
+        channel.setSound(null,null)
+        mNotificationManager.createNotificationChannel(channel)
+    }
+
+    private fun stopNotif(){
+        stopForeground(false)
+    }
+
 
     private val mMessenger = Messenger(IncomingHandler(this))
 
@@ -97,5 +137,7 @@ class MediaService : Service(), MediaPlayerCallback {
         const val TAG = "MediaService"
         const val PLAY = 0
         const val STOP = 1
+        const val CHANNEL_DEFAULT_IMPORTANCE = "Channel_Test"
+        const val ONGOING_NOTIFICATION_ID = 1
     }
 }
