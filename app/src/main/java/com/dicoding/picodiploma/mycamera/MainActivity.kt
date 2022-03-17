@@ -2,6 +2,7 @@ package com.dicoding.picodiploma.mycamera
 
 import android.Manifest
 import android.content.Intent
+import android.content.Intent.ACTION_GET_CONTENT
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
@@ -44,6 +45,16 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private val launcherIntentGallery = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ){
+        if(it.resultCode == RESULT_OK){
+            val selectedImg: Uri = it.data?.data as Uri
+            val myFile = selectedImg.toFile(this)
+            binding.previewImageView.setImageURI(selectedImg)
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
@@ -78,7 +89,11 @@ class MainActivity : AppCompatActivity() {
             }
         }
         binding.galleryButton.setOnClickListener {
-            Toast.makeText(this, "Fitur ini belum tersedia", Toast.LENGTH_SHORT).show()
+            val intent = Intent()
+            intent.action = ACTION_GET_CONTENT
+            intent.type = "image/*"
+            val chooser = Intent.createChooser(intent, "Choose a Picture")
+            launcherIntentGallery.launch(chooser)
         }
         binding.uploadButton.setOnClickListener {
             Toast.makeText(this, "Fitur ini belum tersedia", Toast.LENGTH_SHORT).show()
